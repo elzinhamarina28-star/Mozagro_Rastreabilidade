@@ -1,0 +1,776 @@
+<!DOCTYPE html>  <html lang="pt-BR" class="h-full">  
+<head>  
+  <meta charset="UTF-8">  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+  <title>MOZAGRO — Sistema de Rastreabilidade V5.1</title>    <script src="https://cdn.tailwindcss.com"></script>    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
+  <link rel="preconnect" href="https://fonts.googleapis.com">  
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">    <script>  
+    tailwind.config = {  
+      theme: {  
+        extend: {  
+          fontFamily: { sans: ['Inter', 'sans-serif'] },  
+          colors: {  
+            brand: {  
+              50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0',  
+              300: '#86efac', 400: '#4ade80', 500: '#22c55e',  
+              600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d'  
+            }  
+          }  
+        }  
+      }  
+    };  
+  </script>    <style>  
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }  
+    .animate-fade-in { animation: fadeIn .25s ease-out; }  
+    ::-webkit-scrollbar { width: 8px; height: 8px; }  
+    ::-webkit-scrollbar-track { background: #f1f5f9; }  
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }  
+    .tab-content { min-height: 0; }  
+    .required::after { content: ' *'; color: #dc2626; }  
+  </style>  </head>  <body class="h-full bg-slate-50 text-slate-800 font-sans antialiased flex flex-col">  <header class="bg-brand-900 text-white shadow-md sticky top-0 z-50">  
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">  
+    <div class="flex items-center gap-3 min-w-0">  
+      <div class="bg-brand-600 p-2 rounded-xl w-10 h-10 flex items-center justify-center shrink-0">  
+        <i class="fa-solid fa-seedling text-lg"></i>  
+      </div>  
+      <div class="min-w-0">  
+        <h1 class="font-extrabold text-lg tracking-tight leading-tight">MOZAGRO</h1>  
+        <p class="text-xs text-brand-200 truncate">Sistema de Rastreabilidade V5.1</p>  
+      </div>  
+    </div>  
+    <div class="flex items-center gap-2">  
+      <span id="connection-badge" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-800 border border-brand-700">  
+        <span class="w-2 h-2 mr-2 rounded-full bg-amber-300"></span>Conectando...  
+      </span>  
+      <button onclick="atualizarPainel()" class="bg-brand-600 hover:bg-brand-500 px-3 py-2 rounded-lg text-sm font-semibold transition">  
+        <i class="fa-solid fa-rotate"></i><span class="hidden sm:inline ml-2">Atualizar</span>  
+      </button>  
+    </div>  
+  </div>  
+</header>  <main class="flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-6 py-5 flex flex-col lg:flex-row gap-5 overflow-hidden">    <aside class="w-full lg:w-64 shrink-0 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">  
+    <div class="flex lg:flex-col gap-2 min-w-max lg:min-w-0">  
+      <button data-tab="dashboard" onclick="switchTab('dashboard')" class="tab-btn active flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-brand-600 text-white shadow-sm">  
+        <i class="fa-solid fa-chart-pie w-5"></i><span>Painel</span>  
+      </button>  
+      <button data-tab="recebimento" onclick="switchTab('recebimento')" class="tab-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">  
+        <i class="fa-solid fa-truck-ramp-box w-5 text-brand-600"></i><span>Recebimentos</span>  
+      </button>  
+      <button data-tab="producao" onclick="switchTab('producao')" class="tab-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">  
+        <i class="fa-solid fa-industry w-5 text-blue-600"></i><span>Produções</span>  
+      </button>  
+      <button data-tab="rastreabilidade" onclick="switchTab('rastreabilidade')" class="tab-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">  
+        <i class="fa-solid fa-route w-5 text-purple-600"></i><span>Rastreabilidade</span>  
+      </button>  
+      <button data-tab="estoque" onclick="switchTab('estoque')" class="tab-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">  
+        <i class="fa-solid fa-boxes-stacked w-5 text-amber-600"></i><span>Estoque por Lote</span>  
+      </button>  
+      <button data-tab="ficha" onclick="switchTab('ficha')" class="tab-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">  
+        <i class="fa-solid fa-file-lines w-5 text-cyan-600"></i><span>Ficha</span>  
+      </button>  
+      <button data-tab="scanner" onclick="switchTab('scanner')" class="tab-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">  
+        <i class="fa-solid fa-wand-magic-sparkles w-5 text-pink-600"></i><span>Scanner / IA</span>  
+      </button>  
+      <button data-tab="diagnostico" onclick="switchTab('diagnostico')" class="tab-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">  
+        <i class="fa-solid fa-stethoscope w-5 text-emerald-600"></i><span>Diagnóstico</span>  
+      </button>  
+    </div>  
+  </aside>    <section class="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-y-auto p-5 sm:p-6">  <!-- PAINEL -->  
+<div id="tab-dashboard" class="tab-content animate-fade-in space-y-6">  
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">  
+    <div>  
+      <h2 class="text-xl font-extrabold text-slate-900">Visão geral</h2>  
+      <p class="text-sm text-slate-500">Resumo dos registros existentes na rastreabilidade.</p>  
+    </div>  
+    <button onclick="atualizarPainel()" class="bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm font-semibold text-slate-700">  
+      <i class="fa-solid fa-arrows-rotate mr-2"></i>Recarregar dados  
+    </button>  
+  </div>  
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">  
+    <div class="rounded-2xl border border-brand-100 bg-brand-50 p-5">  
+      <div class="text-xs uppercase font-bold tracking-wider text-brand-800">Linhas de rastreabilidade</div>  
+      <div id="stat-rast" class="text-3xl font-extrabold text-brand-900 mt-2">—</div>  
+      <div class="text-xs text-brand-700 mt-1">registros encontrados</div>  
+    </div>  
+    <div class="rounded-2xl border border-blue-100 bg-blue-50 p-5">  
+      <div class="text-xs uppercase font-bold tracking-wider text-blue-800">Produções</div>  
+      <div id="stat-producoes" class="text-3xl font-extrabold text-blue-900 mt-2">—</div>  
+      <div class="text-xs text-blue-700 mt-1">IDs de produção distintos</div>  
+    </div>  
+    <div class="rounded-2xl border border-purple-100 bg-purple-50 p-5">  
+      <div class="text-xs uppercase font-bold tracking-wider text-purple-800">Produtos</div>  
+      <div id="stat-produtos" class="text-3xl font-extrabold text-purple-900 mt-2">—</div>  
+      <div class="text-xs text-purple-700 mt-1">produtos distintos</div>  
+    </div>  
+    <div class="rounded-2xl border border-amber-100 bg-amber-50 p-5">  
+      <div class="text-xs uppercase font-bold tracking-wider text-amber-800">Para verificar</div>  
+      <div id="stat-verificar" class="text-3xl font-extrabold text-amber-900 mt-2">—</div>  
+      <div class="text-xs text-amber-700 mt-1">linhas com status de verificação</div>  
+    </div>  
+  </div>  
+
+  <div class="rounded-2xl border border-slate-200 p-5 bg-slate-50">  
+    <div class="flex items-center gap-2 mb-3"><i class="fa-solid fa-circle-info text-brand-600"></i><h3 class="font-bold">Fluxo do sistema</h3></div>  
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm">  
+      <div class="bg-white rounded-xl p-4 border border-slate-200"><b>1.</b> Recebimentos<br><span class="text-xs text-slate-500">MP + lote + NF</span></div>  
+      <div class="bg-white rounded-xl p-4 border border-slate-200"><b>2.</b> Formulações<br><span class="text-xs text-slate-500">versão vigente</span></div>  
+      <div class="bg-white rounded-xl p-4 border border-slate-200"><b>3.</b> Produções<br><span class="text-xs text-slate-500">produto + lote + batida</span></div>  
+      <div class="bg-white rounded-xl p-4 border border-slate-200"><b>4.</b> Rastreabilidade<br><span class="text-xs text-slate-500">teórico × pesado</span></div>  
+      <div class="bg-white rounded-xl p-4 border border-slate-200"><b>5.</b> Estoque<br><span class="text-xs text-slate-500">recebido − consumido</span></div>  
+    </div>  
+  </div>  
+
+  <div class="overflow-x-auto border border-slate-200 rounded-2xl">  
+    <table class="w-full text-sm">  
+      <thead class="bg-slate-50 border-b border-slate-200">  
+        <tr>  
+          <th class="text-left px-4 py-3">ID Produção</th>  
+          <th class="text-left px-4 py-3">Data</th>  
+          <th class="text-left px-4 py-3">Produto</th>  
+          <th class="text-left px-4 py-3">Lote</th>  
+          <th class="text-left px-4 py-3">Matéria-prima</th>  
+          <th class="text-left px-4 py-3">Status</th>  
+        </tr>  
+      </thead>  
+      <tbody id="dashboard-table" class="divide-y divide-slate-100"></tbody>  
+    </table>  
+  </div>  
+</div>  
+
+<!-- RECEBIMENTO -->  
+<div id="tab-recebimento" class="tab-content hidden animate-fade-in space-y-6">  
+  <div class="pb-4 border-b border-slate-100">  
+    <h2 class="text-xl font-extrabold text-slate-900">Novo recebimento de matéria-prima</h2>  
+    <p class="text-sm text-slate-500">Grava o recebimento na aba RECEBIMENTOS e atualiza os cálculos do sistema.</p>  
+  </div>  
+
+  <form id="form-recebimento" class="space-y-5" onsubmit="salvarRecebimentoUI(event)">  
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">  
+      <div><label class="required label">Matéria-prima</label><input id="materiaPrimaRecebimento" required class="input" placeholder="Ex.: Milho moído"></div>  
+      <div><label class="required label">Lote da MP</label><input id="loteRecebimento" required class="input" placeholder="Ex.: MP-2026-001"></div>  
+      <div><label class="label">Fornecedor</label><input id="fornecedorRecebimento" class="input"></div>  
+      <div><label class="label">Fabricante</label><input id="fabricanteRecebimento" class="input"></div>  
+      <div><label class="required label">Quantidade recebida</label><input id="quantidadeRecebimento" required type="number" min="0.0001" step="0.01" class="input" placeholder="0,00"></div>  
+      <div><label class="label">Unidade</label><input id="unidadeRecebimento" class="input" value="KG"></div>  
+      <div><label class="label">Nota fiscal</label><input id="nfRecebimento" class="input" placeholder="NF"></div>  
+      <div><label class="required label">Data de recebimento</label><input id="dataRecebimento" required type="date" class="input"></div>  
+      <div><label class="label">Validade da MP</label><input id="validadeRecebimento" type="date" class="input"></div>  
+      <div><label class="label">Documento de origem</label><input id="documentoOrigemRecebimento" class="input"></div>  
+      <div class="md:col-span-2 xl:col-span-3"><label class="label">Observações</label><textarea id="observacoesRecebimento" rows="3" class="input" placeholder="Observações do recebimento"></textarea></div>  
+    </div>  
+    <div class="flex gap-3 justify-end">  
+      <button type="button" onclick="document.getElementById('form-recebimento').reset(); definirDatasPadrao()" class="btn-secondary">Limpar</button>  
+      <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk mr-2"></i>Salvar recebimento</button>  
+    </div>  
+  </form>  
+</div>  
+
+<!-- PRODUÇÃO -->  
+<div id="tab-producao" class="tab-content hidden animate-fade-in space-y-6">  
+  <div class="pb-4 border-b border-slate-100">  
+    <h2 class="text-xl font-extrabold text-slate-900">Nova produção</h2>  
+    <p class="text-sm text-slate-500">A produção gera as linhas de rastreabilidade com base na formulação ativa.</p>  
+  </div>  
+
+  <form id="form-producao" class="space-y-5" onsubmit="salvarProducaoUI(event)">  
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">  
+      <div><label class="required label">Produto</label><input id="produtoProducao" required class="input"></div>  
+      <div><label class="required label">Lote do produto</label><input id="loteProdutoProducao" required class="input"></div>  
+      <div><label class="label">Espécie / destino</label><input id="especieDestino" class="input"></div>  
+      <div><label class="required label">Quantidade produzida</label><input id="quantidadeProduzida" required type="number" min="0.0001" step="0.01" class="input"></div>  
+      <div><label class="required label">Data de fabricação</label><input id="fabricacaoProducao" required type="date" class="input"></div>  
+      <div><label class="label">Validade</label><input id="validadeProducao" type="date" class="input"></div>  
+      <div><label class="label">Batida</label><input id="batidaProducao" class="input"></div>  
+      <div><label class="label">Número de batidas</label><input id="numeroBatidas" type="number" min="1" step="1" value="1" class="input"></div>  
+      <div><label class="label">Responsável</label><input id="responsavelProducao" class="input"></div>  
+      <div><label class="label">Documento de origem</label><input id="documentoOrigemProducao" class="input"></div>  
+      <div class="md:col-span-2"><label class="label">Observações</label><textarea id="observacoesProducao" rows="3" class="input"></textarea></div>  
+    </div>  
+    <div class="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">  
+      <i class="fa-solid fa-circle-info mr-2"></i>  
+      A formulação é procurada por <b>produto + data da produção</b>, considerando status/vigência e versão disponíveis na aba FORMULAÇÕES.  
+    </div>  
+    <div class="flex gap-3 justify-end">  
+      <button type="button" onclick="document.getElementById('form-producao').reset(); definirDatasPadrao()" class="btn-secondary">Limpar</button>  
+      <button type="submit" class="btn-primary"><i class="fa-solid fa-industry mr-2"></i>Salvar produção</button>  
+    </div>  
+  </form>  
+</div>  
+
+<!-- RASTREABILIDADE -->  
+<div id="tab-rastreabilidade" class="tab-content hidden animate-fade-in space-y-5">  
+  <div class="pb-4 border-b border-slate-100">  
+    <h2 class="text-xl font-extrabold text-slate-900">Consulta de rastreabilidade</h2>  
+    <p class="text-sm text-slate-500">Consulte uma produção específica ou deixe os campos vazios para trazer todas as linhas disponíveis.</p>  
+  </div>  
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">  
+    <input id="consultaProduto" class="input" placeholder="Produto">  
+    <input id="consultaLote" class="input" placeholder="Lote do produto">  
+    <button onclick="consultarRastreabilidadeUI()" class="btn-primary"><i class="fa-solid fa-magnifying-glass mr-2"></i>Consultar</button>  
+  </div>  
+  <div id="rast-summary" class="text-sm text-slate-500"></div>  
+  <div class="overflow-x-auto border border-slate-200 rounded-2xl">  
+    <table class="w-full text-sm min-w-[1400px]">  
+      <thead class="bg-slate-50 border-b border-slate-200">  
+        <tr>  
+          <th class="th">ID Produção</th><th class="th">Data</th><th class="th">Produto</th><th class="th">Lote Prod.</th>  
+          <th class="th">MP</th><th class="th">Lote MP</th><th class="th">Qtd/Batida</th><th class="th">Nº Batidas</th>  
+          <th class="th">Teórica</th><th class="th">Pesada</th><th class="th">Diferença</th><th class="th">% Dif.</th>  
+          <th class="th">Status</th><th class="th">NF</th><th class="th">Validade MP</th><th class="th">Saldo</th>  
+        </tr>  
+      </thead>  
+      <tbody id="rast-table" class="divide-y divide-slate-100"></tbody>  
+    </table>  
+  </div>  
+</div>  
+
+<!-- ESTOQUE -->  
+<div id="tab-estoque" class="tab-content hidden animate-fade-in space-y-6">  
+  <div class="pb-4 border-b border-slate-100">  
+    <h2 class="text-xl font-extrabold text-slate-900">Saldo por matéria-prima e lote</h2>  
+    <p class="text-sm text-slate-500">Consulta o saldo calculado na aba ESTOQUE_LOTES.</p>  
+  </div>  
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">  
+    <input id="estoqueMP" class="input" placeholder="Matéria-prima">  
+    <input id="estoqueLote" class="input" placeholder="Lote da MP">  
+    <button onclick="consultarEstoqueUI()" class="btn-primary"><i class="fa-solid fa-boxes-stacked mr-2"></i>Consultar saldo</button>  
+  </div>  
+  <div id="estoque-card" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"></div>  
+  <div id="estoque-detalhes" class="hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm"></div>  
+</div>  
+
+<!-- FICHA -->  
+<div id="tab-ficha" class="tab-content hidden animate-fade-in space-y-5">  
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">  
+    <div>  
+      <h2 class="text-xl font-extrabold text-slate-900">Ficha de rastreabilidade</h2>  
+      <p class="text-sm text-slate-500">Visualização organizada da produção e dos insumos rastreados.</p>  
+    </div>  
+    <button onclick="window.print()" class="btn-secondary"><i class="fa-solid fa-print mr-2"></i>Imprimir</button>  
+  </div>  
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">  
+    <input id="fichaProduto" class="input" placeholder="Produto">  
+    <input id="fichaLote" class="input" placeholder="Lote do produto">  
+    <button onclick="consultarFichaUI()" class="btn-primary"><i class="fa-solid fa-file-lines mr-2"></i>Montar ficha</button>  
+  </div>  
+  <div id="ficha-area" class="hidden space-y-5"></div>  
+</div>  
+
+<!-- SCANNER / IA -->  
+<div id="tab-scanner" class="tab-content hidden animate-fade-in space-y-6">  
+  <div class="pb-4 border-b border-slate-100">  
+    <h2 class="text-xl font-extrabold text-slate-900">Scanner / IA — Gemini</h2>  
+    <p class="text-sm text-slate-500">O arquivo é enviado ao Gemini pelo Apps Script. O resultado deve ser revisado antes de confirmar a gravação.</p>  
+  </div>  
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">  
+    <label class="border-2 border-dashed border-slate-300 hover:border-brand-500 bg-slate-50 rounded-2xl p-8 text-center cursor-pointer transition">  
+      <div class="w-16 h-16 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-cloud-arrow-up text-2xl"></i></div>  
+      <div class="font-bold text-slate-800">Selecionar documento</div>  
+      <div class="text-xs text-slate-500 mt-1">PDF, PNG, JPG ou outro arquivo compatível</div>  
+      <input id="file-input" type="file" accept="application/pdf,image/*" class="hidden" onchange="analisarDocumentoUI(event)">  
+    </label>  
+
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">  
+      <div class="flex items-center justify-between gap-3 mb-4"><h3 class="font-bold">Status</h3><span id="ocr-status" class="badge-neutral">Aguardando arquivo</span></div>  
+      <div id="ocr-loading" class="hidden text-sm text-slate-600"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Enviando e analisando...</div>  
+      <div id="ocr-file-info" class="text-sm text-slate-500">Nenhum arquivo selecionado.</div>  
+    </div>  
+  </div>  
+
+  <div id="ocr-result" class="hidden space-y-4">  
+    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">  
+      <div class="flex items-center gap-2 font-bold text-emerald-900 mb-4"><i class="fa-solid fa-robot"></i>Resultado extraído</div>  
+      <div id="ocr-header" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>  
+    </div>  
+    <div class="overflow-x-auto border border-slate-200 rounded-2xl">  
+      <table class="w-full text-sm min-w-[900px]">  
+        <thead class="bg-slate-50 border-b border-slate-200"><tr><th class="th">Data produção</th><th class="th">Quantidade</th><th class="th">Produto</th><th class="th">Lote</th><th class="th">Confiança</th><th class="th">Revisão</th></tr></thead>  
+        <tbody id="ocr-table" class="divide-y divide-slate-100"></tbody>  
+      </table>  
+    </div>  
+    <div class="flex justify-end gap-3">  
+      <button onclick="limparOCR()" class="btn-secondary">Descartar resultado</button>  
+      <button onclick="confirmarOCR()" class="btn-primary"><i class="fa-solid fa-check mr-2"></i>Confirmar e gravar produções</button>  
+    </div>  
+  </div>  
+</div>  
+
+<!-- DIAGNÓSTICO -->  
+<div id="tab-diagnostico" class="tab-content hidden animate-fade-in space-y-6">  
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">  
+    <div>  
+      <h2 class="text-xl font-extrabold text-slate-900">Diagnóstico do sistema</h2>  
+      <p class="text-sm text-slate-500">Executa testes diretamente no Apps Script e mostra os retornos nesta tela.</p>  
+    </div>  
+    <button onclick="executarDiagnostico()" class="btn-primary"><i class="fa-solid fa-play mr-2"></i>Executar diagnóstico</button>  
+  </div>  
+  <div id="diag-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div>  
+  <pre id="diag-log" class="bg-slate-950 text-slate-200 rounded-2xl p-5 min-h-[300px] text-xs overflow-auto whitespace-pre-wrap">Clique em “Executar diagnóstico”.</pre>  
+</div>
+
+  </section>  
+</main>  <div id="toast" class="fixed right-5 bottom-5 z-[100] translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl max-w-[90vw]">  
+  <div class="flex items-center gap-3"><i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i><span id="toast-message" class="text-sm font-semibold"></span></div>  
+</div>  <style>  
+  .label { display:block; font-size:.72rem; line-height:1rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#475569; margin-bottom:.4rem; }  
+  .input { width:100%; background:#f8fafc; border:1px solid #cbd5e1; border-radius:.75rem; padding:.68rem .9rem; font-size:.9rem; outline:none; }  
+  .input:focus { border-color:#16a34a; box-shadow:0 0 0 3px rgba(34,197,94,.12); background:#fff; }  
+  .btn-primary { background:#16a34a; color:#fff; font-weight:800; border-radius:.75rem; padding:.68rem 1rem; font-size:.88rem; transition:.2s; }  
+  .btn-primary:hover { background:#15803d; }  
+  .btn-secondary { background:#f1f5f9; color:#334155; font-weight:700; border-radius:.75rem; padding:.68rem 1rem; font-size:.88rem; }  
+  .btn-secondary:hover { background:#e2e8f0; }  
+  .th { text-align:left; padding:.75rem 1rem; white-space:nowrap; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:#475569; }  
+  .badge-neutral { display:inline-flex; align-items:center; padding:.35rem .65rem; border-radius:999px; background:#e2e8f0; color:#475569; font-size:.72rem; font-weight:800; }  
+  .badge-ok { display:inline-flex; align-items:center; padding:.35rem .65rem; border-radius:999px; background:#dcfce7; color:#166534; font-size:.72rem; font-weight:800; }  
+  .badge-warn { display:inline-flex; align-items:center; padding:.35rem .65rem; border-radius:999px; background:#fef3c7; color:#92400e; font-size:.72rem; font-weight:800; }  
+  .badge-error { display:inline-flex; align-items:center; padding:.35rem .65rem; border-radius:999px; background:#fee2e2; color:#991b1b; font-size:.72rem; font-weight:800; }  
+</style>  <script>  
+  let ultimaRastreabilidade = [];  
+  let resultadoIAAtual = null;  
+
+  const $ = id => document.getElementById(id);  
+
+  function mostrarToast(mensagem, erro=false) {  
+    const toast = $('toast');  
+    $('toast-message').textContent = mensagem;  
+    $('toast-icon').className = erro  
+      ? 'fa-solid fa-triangle-exclamation text-red-400'  
+      : 'fa-solid fa-circle-check text-emerald-400';  
+    toast.classList.remove('translate-y-20', 'opacity-0');  
+    clearTimeout(window.__toastTimer);  
+    window.__toastTimer = setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3500);  
+  }  
+
+  function erroGoogle(err) {  
+    const msg = err && err.message ? err.message : String(err || 'Erro desconhecido.');  
+    mostrarToast(msg, true);  
+    console.error(err);  
+  }  
+
+  function switchTab(tabId) {  
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));  
+    document.querySelectorAll('.tab-btn').forEach(btn => {  
+      btn.classList.remove('bg-brand-600','text-white','shadow-sm');  
+      btn.classList.add('bg-white','text-slate-600','border','border-slate-200');  
+    });  
+    const tab = $('tab-' + tabId);  
+    if (tab) tab.classList.remove('hidden');  
+    const btn = document.querySelector('[data-tab="' + tabId + '"]');  
+    if (btn) {  
+      btn.classList.remove('bg-white','text-slate-600','border','border-slate-200');  
+      btn.classList.add('bg-brand-600','text-white','shadow-sm');  
+    }  
+    if (tabId === 'dashboard') atualizarPainel();  
+  }  
+
+  function hojeISO() { return new Date().toISOString().slice(0,10); }  
+  function definirDatasPadrao() {  
+    const d = hojeISO();  
+    if ($('dataRecebimento')) $('dataRecebimento').value = d;  
+    if ($('fabricacaoProducao')) $('fabricacaoProducao').value = d;  
+  }  
+
+  function salvarRecebimentoUI(e) {  
+    e.preventDefault();  
+    const dados = {  
+      materiaPrima: $('materiaPrimaRecebimento').value.trim(),  
+      lote: $('loteRecebimento').value.trim(),  
+      fornecedor: $('fornecedorRecebimento').value.trim(),  
+      fabricante: $('fabricanteRecebimento').value.trim(),  
+      quantidade: $('quantidadeRecebimento').value,  
+      unidade: $('unidadeRecebimento').value.trim(),  
+      nf: $('nfRecebimento').value.trim(),  
+      dataRecebimento: $('dataRecebimento').value,  
+      validade: $('validadeRecebimento').value,  
+      documentoOrigem: $('documentoOrigemRecebimento').value.trim(),  
+      observacoes: $('observacoesRecebimento').value.trim()  
+    };  
+    setBusy('form-recebimento', true);  
+    google.script.run  
+      .withSuccessHandler(r => {  
+        setBusy('form-recebimento', false);  
+        mostrarToast(r && r.mensagem ? r.mensagem : 'Recebimento salvo.');  
+        $('form-recebimento').reset();  
+        definirDatasPadrao();  
+        atualizarPainel();  
+      })  
+      .withFailureHandler(err => { setBusy('form-recebimento', false); erroGoogle(err); })  
+      .salvarRecebimento(dados);  
+  }  
+
+  function salvarProducaoUI(e) {  
+    e.preventDefault();  
+    const dados = {  
+      produto: $('produtoProducao').value.trim(),  
+      loteProduto: $('loteProdutoProducao').value.trim(),  
+      especie: $('especieDestino').value.trim(),  
+      quantidadeProduzida: $('quantidadeProduzida').value,  
+      dataFabricacao: $('fabricacaoProducao').value,  
+      dataValidade: $('validadeProducao').value,  
+      batida: $('batidaProducao').value.trim(),  
+      numeroBatidas: $('numeroBatidas').value,  
+      responsavel: $('responsavelProducao').value.trim(),  
+      documentoOrigem: $('documentoOrigemProducao').value.trim(),  
+      observacoes: $('observacoesProducao').value.trim()  
+    };  
+    setBusy('form-producao', true);  
+    google.script.run  
+      .withSuccessHandler(r => {  
+        setBusy('form-producao', false);  
+        const msg = r && r.mensagem ? r.mensagem : 'Produção salva.';  
+        mostrarToast(msg, !(r && r.sucesso));  
+        if (r && r.sucesso) {  
+          $('form-producao').reset();  
+          $('numeroBatidas').value = 1;  
+          definirDatasPadrao();  
+          atualizarPainel();  
+        }  
+      })  
+      .withFailureHandler(err => { setBusy('form-producao', false); erroGoogle(err); })  
+      .salvarProducao(dados);  
+  }  
+
+  function setBusy(formId, busy) {  
+    const form = $(formId);  
+    if (!form) return;  
+    form.querySelectorAll('button').forEach(b => b.disabled = busy);  
+  }  
+
+  function consultarRastreabilidadeUI() {  
+    const produto = $('consultaProduto').value.trim();  
+    const lote = $('consultaLote').value.trim();  
+    $('rast-summary').textContent = 'Consultando...';  
+    $('rast-table').innerHTML = '<tr><td colspan="16" class="px-4 py-8 text-center text-slate-400">Carregando...</td></tr>';  
+    google.script.run  
+      .withSuccessHandler(rows => {  
+        ultimaRastreabilidade = Array.isArray(rows) ? rows : [];  
+        renderRastreabilidade(ultimaRastreabilidade);  
+      })  
+      .withFailureHandler(erroGoogle)  
+      .consultarProducao(produto, lote);  
+  }  
+
+  function renderRastreabilidade(rows) {  
+    $('rast-summary').textContent = rows.length + ' linha(s) encontrada(s).';  
+    const body = $('rast-table');  
+    body.innerHTML = '';  
+    if (!rows.length) {  
+      body.innerHTML = '<tr><td colspan="16" class="px-4 py-10 text-center text-slate-400">Nenhum registro encontrado.</td></tr>';  
+      return;  
+    }  
+    rows.forEach(r => {  
+      const tr = document.createElement('tr');  
+      tr.className = 'hover:bg-slate-50';  
+      tr.innerHTML = `  
+        <td class="px-4 py-3 font-semibold">${esc(r.idProducao)}</td>  
+        <td class="px-4 py-3">${esc(r.dataProducao)}</td>  
+        <td class="px-4 py-3">${esc(r.produto)}</td>  
+        <td class="px-4 py-3">${esc(r.loteProduto)}</td>  
+        <td class="px-4 py-3">${esc(r.materiaPrima)}</td>  
+        <td class="px-4 py-3">${esc(r.loteMP)}</td>  
+        <td class="px-4 py-3">${fmtNum(r.quantidadePorBatida)}</td>  
+        <td class="px-4 py-3">${fmtNum(r.numeroBatidas)}</td>  
+        <td class="px-4 py-3">${fmtNum(r.quantidadeTeorica)}</td>  
+        <td class="px-4 py-3">${r.quantidadePesada === '' ? '—' : esc(r.quantidadePesada)}</td>  
+        <td class="px-4 py-3">${r.diferenca === '' ? '—' : esc(r.diferenca)}</td>  
+        <td class="px-4 py-3">${r.percentual === '' ? '—' : esc(r.percentual)}</td>  
+        <td class="px-4 py-3">${statusBadge(r.status)}</td>  
+        <td class="px-4 py-3">${esc(r.nfOrigem)}</td>  
+        <td class="px-4 py-3">${esc(r.validadeMP)}</td>  
+        <td class="px-4 py-3">${r.saldoLoteAposConsumo === '' ? '—' : esc(r.saldoLoteAposConsumo)}</td>`;  
+      body.appendChild(tr);  
+    });  
+  }  
+
+  function consultarEstoqueUI() {  
+    const mp = $('estoqueMP').value.trim();  
+    const lote = $('estoqueLote').value.trim();  
+    if (!mp || !lote) { mostrarToast('Informe a matéria-prima e o lote.', true); return; }  
+    $('estoque-card').classList.remove('hidden');  
+    $('estoque-card').innerHTML = '<div class="col-span-full text-slate-500">Consultando...</div>';  
+    $('estoque-detalhes').classList.add('hidden');  
+    google.script.run  
+      .withSuccessHandler(r => renderEstoque(r))  
+      .withFailureHandler(erroGoogle)  
+      .consultarSaldoLote(mp, lote);  
+  }  
+
+  function renderEstoque(r) {  
+    $('estoque-card').classList.remove('hidden');  
+    const itens = [  
+      ['Recebido', fmtNum(r.quantidadeRecebida) + ' ' + (r.unidade || '')],  
+      ['Consumido', fmtNum(r.quantidadeConsumida) + ' ' + (r.unidade || '')],  
+      ['Saldo', fmtNum(r.saldo) + ' ' + (r.unidade || '')],  
+      ['Status', r.status || '—']  
+    ];  
+    $('estoque-card').innerHTML = itens.map(([a,b]) => `<div class="rounded-2xl border border-slate-200 bg-slate-50 p-5"><div class="text-xs uppercase font-bold tracking-wider text-slate-500">${a}</div><div class="text-2xl font-extrabold text-slate-900 mt-2">${esc(b)}</div></div>`).join('');  
+    $('estoque-detalhes').classList.remove('hidden');  
+    $('estoque-detalhes').innerHTML = `  
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">  
+        <div><span class="text-xs font-bold uppercase text-slate-500">Matéria-prima</span><div class="font-semibold mt-1">${esc(r.materiaPrima)}</div></div>  
+        <div><span class="text-xs font-bold uppercase text-slate-500">Lote</span><div class="font-semibold mt-1">${esc(r.lote)}</div></div>  
+        <div><span class="text-xs font-bold uppercase text-slate-500">Primeiro recebimento</span><div class="font-semibold mt-1">${esc(r.primeiroRecebimento)}</div></div>  
+        <div><span class="text-xs font-bold uppercase text-slate-500">Fornecedor(es)</span><div class="font-semibold mt-1">${esc(r.fornecedor)}</div></div>  
+        <div><span class="text-xs font-bold uppercase text-slate-500">NF(s)</span><div class="font-semibold mt-1">${esc(r.nf)}</div></div>  
+        <div><span class="text-xs font-bold uppercase text-slate-500">Encontrado</span><div class="font-semibold mt-1">${r.encontrado ? 'Sim' : 'Não'}</div></div>  
+      </div>`;  
+  }  
+
+  function consultarFichaUI() {  
+    const produto = $('fichaProduto').value.trim();  
+    const lote = $('fichaLote').value.trim();  
+    google.script.run  
+      .withSuccessHandler(rows => renderFicha(produto, lote, rows || []))  
+      .withFailureHandler(erroGoogle)  
+      .consultarProducao(produto, lote);  
+  }  
+
+  function renderFicha(produto, lote, rows) {  
+    const area = $('ficha-area');  
+    area.classList.remove('hidden');  
+    if (!rows.length) {  
+      area.innerHTML = '<div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">Nenhum registro encontrado.</div>';  
+      return;  
+    }  
+    const primeira = rows[0];  
+    const ids = [...new Set(rows.map(r => r.idProducao).filter(Boolean))];  
+    area.innerHTML = `  
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">  
+        ${fichaInfo('Produto', produto || primeira.produto)}  
+        ${fichaInfo('Lote do produto', lote || primeira.loteProduto)}  
+        ${fichaInfo('Produções', ids.length)}  
+        ${fichaInfo('Linhas', rows.length)}  
+      </div>  
+      <div class="overflow-x-auto border border-slate-200 rounded-2xl">  
+        <table class="w-full text-sm min-w-[1100px]">  
+          <thead class="bg-slate-50"><tr>  
+            <th class="th">ID Produção</th><th class="th">Data</th><th class="th">Batida</th><th class="th">MP</th><th class="th">Lote MP</th><th class="th">Teórica</th><th class="th">Pesada</th><th class="th">Diferença</th><th class="th">Status</th><th class="th">NF</th>  
+          </tr></thead>  
+          <tbody class="divide-y divide-slate-100">${rows.map(r => `  
+            <tr><td class="px-4 py-3">${esc(r.idProducao)}</td><td class="px-4 py-3">${esc(r.dataProducao)}</td><td class="px-4 py-3">${esc(r.batida)}</td><td class="px-4 py-3">${esc(r.materiaPrima)}</td><td class="px-4 py-3">${esc(r.loteMP)}</td><td class="px-4 py-3">${fmtNum(r.quantidadeTeorica)}</td><td class="px-4 py-3">${r.quantidadePesada === '' ? '—' : esc(r.quantidadePesada)}</td><td class="px-4 py-3">${r.diferenca === '' ? '—' : esc(r.diferenca)}</td><td class="px-4 py-3">${statusBadge(r.status)}</td><td class="px-4 py-3">${esc(r.nfOrigem)}</td></tr>  
+          `).join('')}</tbody>  
+        </table>  
+      </div>`;  
+  }  
+
+  function fichaInfo(t, v) { return `<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-xs uppercase font-bold text-slate-500">${t}</div><div class="font-extrabold text-slate-900 mt-1">${esc(v)}</div></div>`; }  
+
+  async function analisarDocumentoUI(event) {  
+    const file = event.target.files && event.target.files[0];  
+    if (!file) return;  
+    $('ocr-status').className = 'badge-warn';  
+    $('ocr-status').textContent = 'Processando';  
+    $('ocr-loading').classList.remove('hidden');  
+    $('ocr-file-info').textContent = file.name + ' — ' + Math.round(file.size / 1024) + ' KB';  
+    $('ocr-result').classList.add('hidden');  
+
+    try {  
+      const base64 = await fileToBase64(file);  
+      google.script.run  
+        .withSuccessHandler(r => {  
+          $('ocr-loading').classList.add('hidden');  
+          resultadoIAAtual = r;  
+          $('ocr-status').className = 'badge-ok';  
+          $('ocr-status').textContent = 'Analisado';  
+          renderResultadoIA(r);  
+        })  
+        .withFailureHandler(err => {  
+          $('ocr-loading').classList.add('hidden');  
+          $('ocr-status').className = 'badge-error';  
+          $('ocr-status').textContent = 'Erro';  
+          erroGoogle(err);  
+        })  
+        .analisarDocumentoGemini({  
+          nome: file.name,  
+          mimeType: file.type || 'application/octet-stream',  
+          tamanho: file.size,  
+          base64: base64  
+        });  
+    } catch (err) {  
+      $('ocr-loading').classList.add('hidden');  
+      $('ocr-status').className = 'badge-error';  
+      $('ocr-status').textContent = 'Erro';  
+      erroGoogle(err);  
+    }  
+  }  
+
+  function fileToBase64(file) {  
+    return new Promise((resolve, reject) => {  
+      const reader = new FileReader();  
+      reader.onload = () => {  
+        const s = String(reader.result || '');  
+        resolve(s.includes(',') ? s.split(',')[1] : s);  
+      };  
+      reader.onerror = reject;  
+      reader.readAsDataURL(file);  
+    });  
+  }  
+
+  function renderResultadoIA(r) {  
+    $('ocr-result').classList.remove('hidden');  
+    $('ocr-header').innerHTML = [  
+      fichaInfo('Tipo de documento', r.tipoDocumento || '—'),  
+      fichaInfo('Mês', r.mes || '—'),  
+      fichaInfo('Responsável', r.responsavel || '—'),  
+      fichaInfo('Documento de origem', r.documentoOrigem || '—'),  
+      fichaInfo('Linhas extraídas', Array.isArray(r.linhas) ? r.linhas.length : 0)  
+    ].join('');  
+    const linhas = Array.isArray(r.linhas) ? r.linhas : [];  
+    $('ocr-table').innerHTML = linhas.length ? linhas.map((l,i) => `  
+      <tr>  
+        <td class="px-4 py-3">${esc(l.dataProducao)}</td>  
+        <td class="px-4 py-3">${esc(l.quantidadeProduzida)}</td>  
+        <td class="px-4 py-3">${esc(l.produto)}</td>  
+        <td class="px-4 py-3">${esc(l.loteProduto)}</td>  
+        <td class="px-4 py-3">${esc(l.confianca)}</td>  
+        <td class="px-4 py-3">${l.revisaoNecessaria ? '<span class="badge-warn">Revisar</span>' : '<span class="badge-ok">OK</span>'}</td>  
+      </tr>`).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">Nenhuma linha extraída.</td></tr>';  
+  }  
+
+  function confirmarOCR() {  
+    if (!resultadoIAAtual || !Array.isArray(resultadoIAAtual.linhas) || !resultadoIAAtual.linhas.length) {  
+      mostrarToast('Não há linhas para confirmar.', true); return;  
+    }  
+    google.script.run  
+      .withSuccessHandler(r => {  
+        mostrarToast(r && r.sucesso ? 'Produções confirmadas e gravadas.' : 'Não foi possível confirmar.', !(r && r.sucesso));  
+        if (r && r.sucesso) { atualizarPainel(); limparOCR(); }  
+      })  
+      .withFailureHandler(erroGoogle)  
+      .salvarProducaoConfirmadaIA(resultadoIAAtual);  
+  }  
+
+  function limparOCR() {  
+    resultadoIAAtual = null;  
+    $('ocr-result').classList.add('hidden');  
+    $('file-input').value = '';  
+    $('ocr-status').className = 'badge-neutral';  
+    $('ocr-status').textContent = 'Aguardando arquivo';  
+    $('ocr-file-info').textContent = 'Nenhum arquivo selecionado.';  
+  }  
+
+  function atualizarPainel() {  
+    $('connection-badge').innerHTML = '<span class="w-2 h-2 mr-2 rounded-full bg-amber-300"></span>Consultando...';  
+    google.script.run  
+      .withSuccessHandler(rows => {  
+        const arr = Array.isArray(rows) ? rows : [];  
+        $('connection-badge').innerHTML = '<span class="w-2 h-2 mr-2 rounded-full bg-emerald-400"></span>Conectado';  
+        $('stat-rast').textContent = arr.length;  
+        $('stat-producoes').textContent = new Set(arr.map(r=>r.idProducao).filter(Boolean)).size;  
+        $('stat-produtos').textContent = new Set(arr.map(r=>r.produto).filter(Boolean)).size;  
+        $('stat-verificar').textContent = arr.filter(r => normalizarStatus(r.status) === 'VERIFICAR').length;  
+        const recentes = arr.slice(-8).reverse();  
+        $('dashboard-table').innerHTML = recentes.length ? recentes.map(r => `<tr class="hover:bg-slate-50"><td class="px-4 py-3">${esc(r.idProducao)}</td><td class="px-4 py-3">${esc(r.dataProducao)}</td><td class="px-4 py-3">${esc(r.produto)}</td><td class="px-4 py-3">${esc(r.loteProduto)}</td><td class="px-4 py-3">${esc(r.materiaPrima)}</td><td class="px-4 py-3">${statusBadge(r.status)}</td></tr>`).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">Nenhuma linha de rastreabilidade encontrada.</td></tr>';  
+      })  
+      .withFailureHandler(err => { $('connection-badge').innerHTML = '<span class="w-2 h-2 mr-2 rounded-full bg-red-400"></span>Erro de conexão'; erroGoogle(err); })  
+      .consultarProducao('', '');  
+  }  
+
+  function executarDiagnostico() {  
+    $('diag-log').textContent = '[1/8] Estrutura...';  
+    $('diag-grid').innerHTML = '';  
+    google.script.run  
+      .withSuccessHandler(r1 => {  
+        const steps = [  
+          ['Estrutura', 'testeEstruturaCompleta'],  
+          ['Fórmulas', 'testeFormulasAutomaticas'],  
+          ['Recebimento', 'testeGravacaoRecebimento'],  
+          ['Múltiplos recebimentos', 'testeMultiplosRecebimentos'],  
+          ['Diferença de pesagem', 'testeDiferencaPesagem'],  
+          ['NF / lote', 'testeNFRecebimento'],  
+          ['Estoque', 'testeEstoque'],  
+          ['Formulação ativa', 'testeFormulacaoAtiva']  
+        ];  
+        const result = {};  
+        result.estrutura = r1;  
+        let i = 1;  
+        function next() {  
+          if (i >= steps.length) { finalizarDiag(result); return; }  
+          const [label, fn] = steps[i];  
+          $('diag-log').textContent += '\n['+(i+1)+'/8] '+label+'...';  
+          google.script.run.withSuccessHandler(r => { result[fn] = r; i++; next(); }).withFailureHandler(err => { result[fn] = {sucesso:false, erro:err.message||String(err)}; i++; next(); })[fn]();  
+        }  
+        next();  
+      })  
+      .withFailureHandler(err => { $('diag-log').textContent = 'Falha no diagnóstico inicial: ' + (err.message || err); erroGoogle(err); })  
+      .testeEstruturaCompleta();  
+  }  
+
+  function finalizarDiag(resultados) {  
+    const entradas = Object.entries(resultados);  
+    $('diag-grid').innerHTML = entradas.map(([nome,r]) => `<div class="rounded-2xl border border-slate-200 p-4 bg-slate-50"><div class="text-xs uppercase font-bold tracking-wider text-slate-500">${esc(nome)}</div><div class="mt-2">${r && r.sucesso ? '<span class="badge-ok">SUCESSO</span>' : '<span class="badge-error">FALHOU / NÃO CONFIRMADO</span>'}</div><div class="text-xs text-slate-500 mt-2">${esc(r && (r.mensagem || r.erro || '') || '')}</div></div>`).join('');  
+    $('diag-log').textContent += '\n\nDiagnóstico concluído. Veja o resultado de cada teste acima.';  
+    mostrarToast('Diagnóstico concluído.');  
+  }  
+
+  function statusBadge(v) {  
+    const s = normalizarStatus(v);  
+    if (s === 'OK') return '<span class="badge-ok">OK</span>';  
+    if (s === 'VERIFICAR') return '<span class="badge-warn">VERIFICAR</span>';  
+    if (!s) return '<span class="badge-neutral">—</span>';  
+    return '<span class="badge-neutral">' + esc(v) + '</span>';  
+  }  
+
+  function normalizarStatus(v) {  
+    return String(v || '').trim().toUpperCase();  
+  }  
+
+  function fmtNum(v) {  
+    const n = Number(v);  
+    return Number.isFinite(n)  
+      ? n.toLocaleString('pt-BR',{maximumFractionDigits:4})  
+      : (v == null ? '—' : String(v));  
+  }  
+
+  function esc(v) {  
+    return String(v == null ? '' : v).replace(/[&<>'"]/g, c => ({  
+      '&':'&amp;',  
+      '<':'&lt;',  
+      '>':'&gt;',  
+      "'":'&#39;',  
+      '"':'&quot;'  
+    }[c]));  
+  }  
+
+  function exportarConsulta() {  
+    if (!ultimaRastreabilidade.length) {  
+      mostrarToast('Faça uma consulta de rastreabilidade primeiro.', true);  
+      return;  
+    }  
+
+    const dados = ultimaRastreabilidade.map(r => ({  
+      'ID Produção': r.idProducao,  
+      'ID Batida': r.idBatida,  
+      'Data': r.dataProducao,  
+      'Produto': r.produto,  
+      'Lote Produto': r.loteProduto,  
+      'Batida': r.batida,  
+      'Matéria-prima': r.materiaPrima,  
+      'Lote MP': r.loteMP,  
+      'Validade MP': r.validadeMP,  
+      'Qtd/Batida': r.quantidadePorBatida,  
+      'Nº Batidas': r.numeroBatidas,  
+      'Qtd Teórica': r.quantidadeTeorica,  
+      'Qtd Pesada': r.quantidadePesada,  
+      'Diferença': r.diferenca,  
+      '% Diferença': r.percentual,  
+      'Status': r.status,  
+      'NF': r.nfOrigem,  
+      'Saldo': r.saldoLoteAposConsumo  
+    }));  
+
+    const ws = XLSX.utils.json_to_sheet(dados);  
+    const wb = XLSX.utils.book_new();  
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Rastreabilidade');  
+    XLSX.writeFile(wb, 'MOZAGRO_Rastreabilidade_Consulta.xlsx');  
+  }  
+
+  window.addEventListener('load', () => {  
+    definirDatasPadrao();  
+    atualizarPainel();  
+  });  
+</script>  </body>  
+</html>
